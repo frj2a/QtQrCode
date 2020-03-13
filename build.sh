@@ -25,6 +25,10 @@ if [ -e /usr/bin/doxygen ]
 then
 	doxygen Doxyfile
 fi
+if [ -e /usr/bin/cloc ]
+then
+	cp README1 README.md ; cloc --md uart/ gui/  >> README.md
+fi
 if [ -d latex ]
 then
 	cd latex
@@ -34,8 +38,4 @@ then
 	rm -fR latex
 fi
 rm -f Doxyfile
-if [ -e /usr/bin/cloc ]
-then
-	cloc *.cpp *.h
-fi
 echo -e - - -Finalizada a compilação do programa '\033[1;33m'$PROGRAM'\033[0m' para a plataforma '\033[1;33m'$MAQUINA'\033[0m' ...
