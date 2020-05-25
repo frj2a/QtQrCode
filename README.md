@@ -6,6 +6,8 @@ Used to read from serial port (it can be anything there, not just a qrcode reade
 
 If assigned to, it translates a base64 encoded string to an hex string.
 
+There are some hard-coded instructions to read/write configurations from/to a GM65 module from GROW.
+
 ## Tools
 
 There are two excelent sites:
@@ -20,13 +22,14 @@ The serial reading class thread might be of interest, as it is mostly a blocking
 
 There is also a higher abstraction layer class for the serial port, that defines that callback function as pure virtual, so that another class, now from the application layer, might inherit from it and implement that same callback.
 
+The sample code from Grow to calculate CRC had to be a little tweaked at its end.
+
 Enjoy!
 
 ## Statistics
 
 
-
-cloc|github.com/AlDanial/cloc v 1.82  T=0.05 s (191.7 files/s, 39516.8 lines/s)
+cloc|github.com/AlDanial/cloc v 1.82  T=0.02 s (633.8 files/s, 130616.5 lines/s)
 --- | ---
 
 Language|files|blank|comment|code
