@@ -10,8 +10,7 @@
  * @brief The QRcodeComm class, derived both from <b>QObject</b> and
  * <b>serialPort</b> to interface between them.
  */
-class QRcodeComm: public QObject, public serialPort
-{
+class QRcodeComm: public QObject, public serialPort {
 Q_OBJECT
 private:
 
@@ -19,13 +18,13 @@ private:
 	 * @brief Implements the callback method that receives the answer from
 	 * the serial port input buffer.
 	 */
-	void messageReceived();
+	void messageReceived(size_t bytes);
 
 	/**
 	 * @brief QString instance where the character buffer from the
 	 * serial input line will be inserted to be signaled out to the GUI.
 	 */
-	QString message;
+	QByteArray message;
 
 public:
 signals:
@@ -36,8 +35,7 @@ signals:
 	 * @param text The <b>QString</b> instance into which the serial input
 	 *				buffer was transfered to.
 	 */
-	void signalMessageReceived(QString * text);
-
+	void signalMessageReceived(QByteArray * text);
 
 };
 

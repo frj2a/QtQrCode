@@ -43,6 +43,8 @@ class serialPort;
 struct ThreadParams {
 	char			* in_buf;			//!< Input buffer, _IN_BUFFER_SIZE_ sized.
 	uint16_t		* bytes_received;	//!< number of received bytes in Input buffer.
+	volatile bool	waitTerminator;		//!< If we will we wait for a terminator or for timeout;
+	unsigned char	terminator;			//!< Terminator to look for;
 	volatile bool	messageReady;		//!< Message received successfuly (true) or maximum trials reached (false);
 	volatile bool	receivingMessage;	//!< Tells if the thread is receiving a characters but didn't get the terminator;
 	volatile bool	keepGoing;			//!< Defines if the thread loops for ever or runs just once.
@@ -85,7 +87,6 @@ public:
 
 	explicit serialPortDriver();
 
-
 	~serialPortDriver();
 
 	/**
@@ -108,14 +109,16 @@ public:
 	 *
 	 * @return <b>true</b> if the device was opened properly.
 	 */
-	bool openPort(std::string &filepath, int32_t &baudRate, std::string &mode, cc_t &timeout, serialPort * receiverObject);
+	bool openPort(std::string &filepath, int32_t &baudRate, std::string &mode, cc_t &timeout_tr, serialPort * receiverObject, bool waitTerminator, unsigned char terminator);
+
 
 	/**
 	 * @brief Open connection to a  UART device with an already known configuration.
 	 *
 	 * @return <b>true</b>  if the device was opened properly.
 	 */
-	bool openPort();
+	bool openPort(bool waitTerminator, unsigned char terminator);
+
 
 	/**
 	 * @brief Closes the connection to the previously opened UART device.
@@ -123,6 +126,7 @@ public:
 	 * @return <b>true</b>  if the device was closed properly.
 	 */
 	bool closePort();
+
 
 	/**
 	 * @brief Writes data to the UART device.
@@ -133,7 +137,8 @@ public:
 	 *
 	 * @return the size of the written string, if the message/command was written properly, otherwise -1.
 	 */
-	ssize_t writePort(std::string &message);
+	ssize_t writePort(char * buffer, unsigned int len);
+
 
 	/**
 	 * @brief Thread to keep reading data from the UART device.
@@ -161,7 +166,7 @@ private:
 	/**
 	 * @brief Starts the receiving line polling thread.
 	 */
-	void startThread();
+	void startThread(bool waitTerminator, unsigned char terminator);
 
 
 	/**
@@ -195,25 +200,30 @@ private:
 	 */
 	int				fd_;
 
+
 	/**
 	 * \brief	IO access timeout in msec.
 	 */
 	cc_t			timeout_;	// in tenths of second - ds (or decisecond)
+
 
 	/**
 	 * \brief	Device file path.
 	 */
 	std::string		filepath_;
 
+
 	/**
 	 * \brief	Desired speed (baud rate).
 	 */
 	speed_t			baud_;
 
+
 	/**
 	 * \brief	Desired operation mode (as '8N1H').
 	 */
 	std::string		mode_;
+
 
 	/**
 	 * \brief	Flag to check if the port was already opened.

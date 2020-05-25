@@ -69,7 +69,8 @@ public:
 	/**
 	 * @brief Receives the answer from serial port input buffer.
 	 */
-	virtual void messageReceived() = 0;
+	virtual void messageReceived(size_t bytes) = 0;
+
 
 	/**
 	 * @brief Opens the specified serial port using the configurations given.
@@ -86,14 +87,16 @@ public:
 	 *				instruction so that thread can check if it is time to stop;
 	 * @return <b>true</b> if the device was opened properly.
 	 */
-	bool openSerialPort(std::string &port, int32_t &baudRate, std::string &mode, cc_t & timeout);
+	bool openSerialPort(std::string &port, int32_t &baudRate, std::string &mode, cc_t & timeout_tr, bool waitTerminator, unsigned char terminator);
+
 
 	/**
 	 * @brief Reopens the serial port with the same configurations used in a previous opening.
 	 *
 	 * @return <b>true</b> if the device was opened properly.
 	 */
-	bool reopenSerialPort();
+	bool reopenSerialPort(bool waitTerminator, unsigned char terminator);
+
 
 	/**
 	 * @brief Closes the serial port.
@@ -102,8 +105,9 @@ public:
 	 */
 	bool closeSerialPort();
 
+
 	/**
-	 * @brief Allows to check if the serial port is opened.
+	 * @brief Allows checking if the serial port is opened.
 	 *
 	 * @return <b>true</b> if the device is opened properly.
 	 */
@@ -112,14 +116,14 @@ public:
 	}
 
 
+	bool write(char * buffer, int len);
+
+
 protected:
 
 	ThreadParams				* threadParams;			//!< Mutable parameters to and from the serial receiving thread.
-
 	serialPortDriver			* sPort;				//!< The serial port handler.
-
 	char						in_buf[IN_BUFFER_SIZE];	//!< Input buffer, used in the receiving thread.
-
 	uint16_t					bytes_received;			//!< number of bytes received in each message from the reader.
 
 

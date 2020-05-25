@@ -53,34 +53,27 @@ static ThreadParams readThreadParams ;
 
 
 
-serialPortDriver::serialPortDriver()
-{
+serialPortDriver::serialPortDriver() {
 	fd_ = 0;
 	threadParams = &readThreadParams;
 	portOpened_ = false;
 }
 
-serialPortDriver::~serialPortDriver()
-{
-	if (portOpened_)
-	{
+serialPortDriver::~serialPortDriver() {
+	if (portOpened_) {
 		closePort();
 	}
 }
 
-bool serialPortDriver::openPort(std::string &filepath, int32_t &baudRate, std::string &mode, cc_t &timeout, serialPort * receiverObject)
-{
+bool serialPortDriver::openPort(std::string &filepath, int32_t &baudRate, std::string &mode, cc_t &timeout_tr, serialPort * receiverObject, bool waitTerminator, unsigned char terminator) {
 	threadParams->receiver = receiverObject;
-
-	if ( !filepath.empty() && (0 != baudRate) && !mode.empty() )
-	{
+	if ( !filepath.empty() && (0 != baudRate) && !mode.empty() ) {
 		filepath_ = filepath;
-		timeout_ = timeout;
+		timeout_ = timeout_tr;
 		mode_ = mode;
 		baud_ = B1152000;
 		portOpened_ = false;
-		switch(baudRate)
-		{
+		switch(baudRate) {
 			case 50:
 				baud_ = B50;
 			break;
@@ -174,19 +167,16 @@ bool serialPortDriver::openPort(std::string &filepath, int32_t &baudRate, std::s
 			default:
 				baud_ = B9600;
 		}
-		return (openPort());
-	}
-	else {
+		return (openPort(waitTerminator, terminator));
+	} else {
 		return (false);
 	}
 }
 
-bool serialPortDriver::openPort()
-{
+bool serialPortDriver::openPort(bool waitTerminator, unsigned char terminator) {
 	int status;
 	bool success = true;
-	if (!portOpened_)
-	{
+	if (!portOpened_) {
 		bool commonPort = ( std::string::npos != filepath_.find("tty") );
 
 		tcflag_t cbits = CS8;
@@ -194,14 +184,10 @@ bool serialPortDriver::openPort()
 		tcflag_t ipar = IGNPAR;
 		tcflag_t isfl = 0;
 		tcflag_t bstop = 0;	// 0 means 1 stop bit;
-		if (4 != mode_.size())
-		{
+		if (4 != mode_.size()) {
 			success = false;
-		}
-		else
-		{
-			switch(mode_[0])
-			{
+		} else {
+			switch(mode_[0]) {
 				case '8':
 					cbits = CS8;
 				break;
@@ -217,8 +203,7 @@ bool serialPortDriver::openPort()
 				default:
 					success = false;
 			}
-			switch(mode_[1])
-			{
+			switch(mode_[1]) {
 				case 'N':
 				case 'n':
 					cpar = 0;
@@ -237,8 +222,7 @@ bool serialPortDriver::openPort()
 				default:
 					success = false;
 			}
-			switch(mode_[2])
-			{
+			switch(mode_[2]) {
 				case '1':
 					bstop = 0;
 				break;
@@ -248,79 +232,60 @@ bool serialPortDriver::openPort()
 				default:
 					success = false;
 			}
-			if (success)
-			{
-				if (mode_[3]=='S')
-				{
+			if (success) {
+				if (mode_[3]=='S') {
 					isfl = IXON | IXOFF | IXANY;
-				}
-				else
-				{
+				} else {
 					isfl = 0;
 				}
-				if (commonPort)		// common ports;
-				{
+				if (commonPort) {		// common ports;
 					fd_ = open(filepath_.c_str(), O_RDWR | O_NOCTTY | O_ASYNC);
-				}
-				else		// pts terminals
-				{
+				} else {		// pts terminals
 					fd_ = open(filepath_.c_str(), O_RDWR            | O_ASYNC);
 				}
-				if (fd_ == -1)
-				{
+				if (fd_ == -1) {
 					perror("unable to open comport ");
 					success = false;
-				}
-				else
-				{
-					if (commonPort)		// common ports;
-					{
+				} else {
+					if (commonPort)	{	// common ports;
 						int error = tcgetattr(fd_, &old_port_settings);
-						if (error == -1)
-						{
+						if (error == -1) {
 							close(fd_);
 							success = false;
-						}
-						else
-						{
+						} else {
 							memset(&new_port_settings, 0, sizeof(new_port_settings));
 
-							// new_port_settings.c_cflag &= ~PARENB;
-							// new_port_settings.c_cflag &= ~PARODD;
-							// new_port_settings.c_cflag &= ~CSTOPB;
-							// new_port_settings.c_cflag &= ~CSIZE;
+							// new_port_settings_terminator.c_cflag &= ~PARENB;
+							// new_port_settings_terminator.c_cflag &= ~PARODD;
+							// new_port_settings_terminator.c_cflag &= ~CSTOPB;
+							// new_port_settings_terminator.c_cflag &= ~CSIZE;
 							new_port_settings.c_cflag = cbits | cpar | bstop | CLOCAL | CREAD;
 
-							// new_port_settings.c_iflag &= ~(IXON | IXOFF | IXANY);
+							// new_port_settings_terminator.c_iflag &= ~(IXON | IXOFF | IXANY);
 							new_port_settings.c_iflag = ipar | isfl;
 
-							// new_port_settings.c_oflag &= ~OPOST;
+							// new_port_settings_terminator.c_oflag &= ~OPOST;
 							new_port_settings.c_oflag = 0;		// raw output;
 
-							// new_port_settings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+							// new_port_settings_terminator.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 							new_port_settings.c_lflag = 0;
 
-							new_port_settings.c_cc[VMIN] = 0;			// blocking read until 1 character arrives or 'read' times out;
+							new_port_settings.c_cc[VMIN] = 0;					// blocking read until 1 character arrives or 'read' times out;
 							new_port_settings.c_cc[VTIME] = timeout_;	// VTIME in tenths of a second;
+
 							cfsetispeed(&new_port_settings, baud_);
 							cfsetospeed(&new_port_settings, baud_);
+
 							error = tcsetattr(fd_, TCSANOW, &new_port_settings);
-							if (error == -1)
-							{
+							if (error == -1) {
 								close(fd_);
 								success = false;
-							}
-							else
-							{
-								if (ioctl(fd_, TIOCMGET, &status)== -1)
-								{
+							} else {
+								if (ioctl(fd_, TIOCMGET, &status)== -1) {
 									perror("unable to get portstatus");
 									success = false;
-								}
-								else
-								{
-									switch(mode_[3])
-									{
+								} else {
+									switch(mode_[3]) {
 										case 'N':
 										case 'n':
 											status &= ~TIOCM_DTR;
@@ -339,10 +304,8 @@ bool serialPortDriver::openPort()
 										default:
 											success = false;
 									}
-									if (success)
-									{
-										if (ioctl(fd_, TIOCMSET, &status)== -1)
-										{
+									if (success) {
+										if (ioctl(fd_, TIOCMSET, &status)== -1) {
 											success = false;
 										}
 										portOpened_ = success;
@@ -350,32 +313,27 @@ bool serialPortDriver::openPort()
 								}
 							}
 						}
-					}
-					else
-					{
+					} else {
 						portOpened_ = success;
 					}
 				}
 			}
 		}
-		if (success)
-		{
-			startThread();
+		if (success) {
+			startThread(waitTerminator, terminator);
 		}
 	}
 	return(success);
 }
 
-bool serialPortDriver::closePort()
-{
+bool serialPortDriver::closePort() {
 	stopThread();
 	portOpened_ = false;
 	tcsetattr(fd_, TCSANOW, &old_port_settings);
 	return (close(fd_));
 }
 
-void serialPortDriver::readPortThread(void* threadParams)
-{
+void serialPortDriver::readPortThread(void* threadParams) {
 	ThreadParams * p = static_cast<ThreadParams*>(threadParams);
 	p->running = true;
 
@@ -384,30 +342,39 @@ void serialPortDriver::readPortThread(void* threadParams)
 
 	p->in_buf[idx] = 0;
 
-	while( p->keepGoing )
-	{
+	size_t siz;
+
+	// usleep(2000);
+
+	while( p->keepGoing ) {
 		p->messageReady = true;
-		do
-		{
-			do
-			{
-				n = read(p->port_fd_, p->in_buf + idx, 1); 	// just one char at a time - or none;
+		if (p->waitTerminator) {
+			siz = 1;
+		} else {
+			siz = 255;
+		}
+		do {
+			do {
+				n = read(p->port_fd_, p->in_buf + idx, siz); 	// just one char at a time - or none;
 			} while ( (n <= 0) && p->keepGoing );
-			idx++;
-			if ( IN_BUFFER_SIZE <= idx )
-			{
+			idx += n;
+			if ( IN_BUFFER_SIZE <= idx ) {
 				idx = 0;
 			}
 			p->in_buf[idx] = 0;
 		}
-		while( p->keepGoing && (TERMINATOR != p->in_buf[idx-1]) );
+		while( p->keepGoing && ( ( p->waitTerminator ) && ( p->terminator != p->in_buf[idx-1] ) ) )
+			;
 
-		if ( p->keepGoing )
-		{
+		if ( p->keepGoing ) {
 			p->receivingMessage = false;
 			p->messageReady = true;
-			*p->bytes_received = idx-1;
-			p->receiver->messageReceived();
+			if (p->waitTerminator) {
+				*p->bytes_received = idx-1;
+			} else {
+				*p->bytes_received = idx;
+			}
+			p->receiver->messageReceived(*p->bytes_received);
 		}
 		p->messageReady = false;
 		n = 0;
@@ -417,27 +384,24 @@ void serialPortDriver::readPortThread(void* threadParams)
 	p->running = false;
 }
 
-void  serialPortDriver::startThread()
-{
+void  serialPortDriver::startThread(bool waitTerminator, unsigned char terminator) {
 	threadParams->port_fd_ = fd_;
 	threadParams->in_buf = threadParams->receiver->in_buf;
 	threadParams->bytes_received = &threadParams->receiver->bytes_received;
+	threadParams->waitTerminator = waitTerminator;
+	threadParams->terminator = terminator;
 	threadParams->receivingMessage = false;
 	threadParams->keepGoing = true;		// this is tested at the end of the thread function;
 	threadParams->messageReady = false;
-	threadParams->receivingMessage = false;
 	threadParams->running = true;
 	std::thread readPortThread_thread (readPortThread, threadParams);
 	readPortThread_thread.detach();
 }
 
-void serialPortDriver::stopThread()
-{
-	if (threadParams->running)
-	{
+void serialPortDriver::stopThread() {
+	if (threadParams->running) 	{
 		threadParams->keepGoing = false;
-		do
-		{
+		do {
 			std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 		}
 		while (threadParams->running);
@@ -446,7 +410,6 @@ void serialPortDriver::stopThread()
 	}
 }
 
-ssize_t serialPortDriver::writePort(std::string &message)
-{
-	return (write(this->fd_, message.c_str(), message.size()));
+ssize_t serialPortDriver::writePort(char *buffer, unsigned int len) {
+	return (write(this->fd_, buffer, len));
 }
