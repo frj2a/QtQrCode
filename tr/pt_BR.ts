@@ -55,5 +55,29 @@
         <source>&amp;Close</source>
         <translation>&amp;Fechar</translation>
     </message>
+    <message>
+        <source>Content expected</source>
+        <translation>Conteúdo esperado</translation>
+    </message>
+    <message>
+        <source>ASCII</source>
+        <translation>ASCII</translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation>Hexa</translation>
+    </message>
+    <message>
+        <source>Base64 -&gt; Hex</source>
+        <translation>Base64 -&gt; Hexa</translation>
+    </message>
+    <message>
+        <source>Messages to be sent:</source>
+        <translation>Messagens a enviar:</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>&amp;Enviar</translation>
+    </message>
 </context>
 </TS>

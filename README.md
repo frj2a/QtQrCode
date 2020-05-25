@@ -26,13 +26,13 @@ Enjoy!
 
 
 
-cloc|github.com/AlDanial/cloc v 1.82  T=0.02 s (450.0 files/s, 79733.8 lines/s)
+cloc|github.com/AlDanial/cloc v 1.82  T=0.05 s (191.7 files/s, 39516.8 lines/s)
 --- | ---
 
 Language|files|blank|comment|code
 :-------|-------:|-------:|-------:|-------:
-C++|5|117|85|704
-Qt|1|0|0|410
-C/C++ Header|4|109|229|118
+C++|5|133|89|805
+Qt|1|0|0|549
+C/C++ Header|4|121|229|135
 --------|--------|--------|--------|--------
-SUM:|10|226|314|1232
+SUM:|10|254|318|1489
